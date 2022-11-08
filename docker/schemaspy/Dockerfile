@@ -1,4 +1,4 @@
-FROM openjdk:17-alpine3.14
+FROM openjdk:18-alpine3.14
 
 RUN apk add --no-cache curl unzip graphviz fontconfig
 
