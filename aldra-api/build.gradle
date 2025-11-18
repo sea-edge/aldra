@@ -1,20 +1,20 @@
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
-    id('org.springframework.boot').version('2.7.2')
-    id('com.diffplug.spotless').version('6.8.0')
-    id('org.openapi.generator').version('6.0.1')
+    id('org.springframework.boot').version('3.4.0')
+    id('com.diffplug.spotless').version('7.0.0.BETA4')
+    id('org.openapi.generator').version('7.10.0')
 }
 
 apply from: "${rootDir}/gradle/common-dependencies/build.gradle"
 dependencies {
-    implementation('org.springframework.boot:spring-boot-starter-web:2.7.3')
-    implementation('org.springframework.boot:spring-boot-starter-actuator:2.7.3')
-    implementation('org.springframework.boot:spring-boot-starter-security:2.7.3')
-    implementation('org.springframework:spring-tx:5.3.22')
-    implementation('io.swagger.core.v3:swagger-annotations:2.2.2')
+    implementation('org.springframework.boot:spring-boot-starter-web:3.4.0')
+    implementation('org.springframework.boot:spring-boot-starter-actuator:3.4.0')
+    implementation('org.springframework.boot:spring-boot-starter-security:3.4.0')
+    implementation('org.springframework:spring-tx:6.2.0')
+    implementation('io.swagger.core.v3:swagger-annotations:2.2.26')
     // FIXME https://github.com/OpenAPITools/openapi-generator/issues/12603
-    implementation('jakarta.validation:jakarta.validation-api:2.0.2')
+    implementation('jakarta.validation:jakarta.validation-api:3.1.0')
     implementation(project(':common'))
     implementation(project(':database'))
 }

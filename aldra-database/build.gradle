@@ -1,6 +1,6 @@
 plugins {
-    id('com.diffplug.spotless').version('6.8.0')
-    id('org.flywaydb.flyway').version('8.3.0')
+    id('com.diffplug.spotless').version('7.0.0.BETA4')
+    id('org.flywaydb.flyway').version('11.0.0')
 }
 
 configurations {
@@ -9,11 +9,11 @@ configurations {
 
 apply from: "${rootDir}/gradle/common-dependencies/build.gradle"
 dependencies {
-    implementation('org.postgresql:postgresql:42.5.0')
-    implementation('org.mybatis.spring.boot:mybatis-spring-boot-starter:2.2.2')
+    implementation('org.postgresql:postgresql:42.7.4')
+    implementation('org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4')
 
-    mbGenerate('org.postgresql:postgresql:42.4.1')
-    mbGenerate('org.mybatis.generator:mybatis-generator-core:1.4.1')
+    mbGenerate('org.postgresql:postgresql:42.7.4')
+    mbGenerate('org.mybatis.generator:mybatis-generator-core:1.4.2')
 }
 
 sourceSets {
