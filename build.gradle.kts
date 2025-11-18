@@ -1,0 +1,24 @@
+allprojects {
+    apply(plugin = "idea")
+    apply(plugin = "eclipse")
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply(plugin = "java")
+
+    repositories {
+        mavenCentral()
+    }
+
+    tasks.withType<JavaCompile> {
+        options.encoding = "UTF-8"
+    }
+}
+
+tasks.wrapper {
+    gradleVersion = "8.11.1"
+}

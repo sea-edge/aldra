@@ -1,0 +1,37 @@
+plugins {
+    id("org.springframework.boot") version "3.4.0"
+    id("com.diffplug.spotless") version "6.25.0"
+}
+
+dependencies {
+    // Common dependencies
+    compileOnly("org.projectlombok:lombok:1.18.36")
+    annotationProcessor("org.projectlombok:lombok:1.18.36")
+    testCompileOnly("org.projectlombok:lombok:1.18.36")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.36")
+    implementation("com.google.guava:guava:33.3.1-jre")
+    implementation("org.apache.commons:commons-lang3:3.17.0")
+    implementation("org.apache.commons:commons-collections4:4.5.0-M2")
+    implementation("commons-io:commons-io:2.18.0")
+    implementation("com.amazonaws:aws-java-sdk-cognitoidp:1.12.780")
+    implementation("com.amazonaws:aws-java-sdk-s3:1.12.780")
+    implementation("com.auth0:java-jwt:4.4.0")
+    implementation("com.auth0:jwks-rsa:0.22.1")
+    testImplementation("org.springframework.boot:spring-boot-starter-test:3.4.0")
+    
+    // Module-specific dependencies
+    implementation("org.springframework.boot:spring-boot-starter-batch:3.4.0")
+    implementation(project(":common"))
+    implementation(project(":database"))
+}
+
+spotless {
+    encoding("UTF-8")
+    java {
+        indentWithSpaces()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+        googleJavaFormat()
+    }
+}
