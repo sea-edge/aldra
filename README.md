@@ -24,12 +24,12 @@ Database implementation (use MyBatis)
 
 ### System / Tools
 
-- Java21
+- Java25
   ```sh
   $ java --version
-  openjdk 21 2023-09-19
-  OpenJDK Runtime Environment (build 21+35)
-  OpenJDK 64-Bit Server VM (build 21+35, mixed mode, sharing)
+  openjdk 25 2025-03-18
+  OpenJDK Runtime Environment (build 25+36)
+  OpenJDK 64-Bit Server VM (build 25+36, mixed mode, sharing)
   ```
 - Docker
   ```sh
