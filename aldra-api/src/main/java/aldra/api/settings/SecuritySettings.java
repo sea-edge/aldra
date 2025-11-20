@@ -13,10 +13,10 @@ import aldra.api.framework.interceptor.WebAPIAccessLogFilter;
 import aldra.common.settings.AWSSettings;
 import aldra.common.utils.CognitoHelper;
 import aldra.database.domain.repository.user.AuthorityMapper;
+import jakarta.servlet.Filter;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
-import javax.servlet.Filter;
-import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.val;
@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
@@ -39,10 +39,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @RequiredArgsConstructor
 @EnableWebSecurity
-@EnableGlobalMethodSecurity( //
-    prePostEnabled = true, //
-    securedEnabled = true //
-    )
+@EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecuritySettings {
 
   private final CORSProperties corsProperties;
@@ -55,9 +52,7 @@ public class SecuritySettings {
 
   @Bean
   public WebSecurityCustomizer webSecurityCustomizer() {
-    return web ->
-        web.ignoring() //
-            .antMatchers("/actuator/health");
+    return web -> web.ignoring().requestMatchers("/actuator/health");
   }
 
   @Bean
@@ -67,42 +62,34 @@ public class SecuritySettings {
     preAuthProvider.setPreAuthenticatedUserDetailsService(
         new JWTAuthorizationUserDetailsService(awsSettings, authorityMapper));
     // for authentication endpoint
-    val authenticationProvider = new CognitoAuthenticationProvider(cognitoHelper);
-    authenticationProvider.setUserDetailsService(
-        new CognitoAuthenticationUserDetailsService(cognitoHelper));
+    val authenticationProvider =
+        new CognitoAuthenticationProvider(
+            cognitoHelper, new CognitoAuthenticationUserDetailsService(cognitoHelper));
     return new ProviderManager(preAuthProvider, authenticationProvider);
   }
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http.csrf()
-        .disable()
-        .cors()
-        .configurationSource(corsConfigurationSource())
-        .and()
-        .formLogin()
-        .disable()
-        .sessionManagement()
-        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        .and()
+    http.csrf(csrf -> csrf.disable())
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .formLogin(formLogin -> formLogin.disable())
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
             auth ->
-                auth.antMatchers("/actuator/health")
+                auth.requestMatchers("/actuator/health")
                     .permitAll()
-                    .antMatchers(VERSION + "/public/**")
+                    .requestMatchers(VERSION + "/public/**")
                     .permitAll()
-                    .antMatchers(VERSION + "/protected/**")
-                    .authenticated()
-                    .and()
-                    .addFilterAt(
-                        cognitoAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                    .addFilterBefore(
-                        jwtAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class)
-                    .addFilterBefore(
-                        new WebAPIAccessLogFilter(), UsernamePasswordAuthenticationFilter.class))
-        .exceptionHandling()
-        .authenticationEntryPoint(
-            (req, res, ex) -> res.setStatus(HttpServletResponse.SC_UNAUTHORIZED));
+                    .requestMatchers(VERSION + "/protected/**")
+                    .authenticated())
+        .addFilterAt(cognitoAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(jwtAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(new WebAPIAccessLogFilter(), UsernamePasswordAuthenticationFilter.class)
+        .exceptionHandling(
+            exception ->
+                exception.authenticationEntryPoint(
+                    (req, res, ex) -> res.setStatus(HttpServletResponse.SC_UNAUTHORIZED)));
     return http.build();
   }
 

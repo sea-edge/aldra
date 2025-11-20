@@ -1,17 +1,22 @@
 package aldra.api.framework.auth;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.util.AntPathMatcher;
 
 @Slf4j
 public class JWTAuthorizationFilter extends AbstractPreAuthenticatedProcessingFilter {
 
   public JWTAuthorizationFilter(String pathPattern) {
     super();
-    setRequiresAuthenticationRequestMatcher(new AntPathRequestMatcher(pathPattern));
+    setRequiresAuthenticationRequestMatcher(createRequestMatcher(pathPattern));
+  }
+
+  private static RequestMatcher createRequestMatcher(String pathPattern) {
+    return request -> new AntPathMatcher().match(pathPattern, request.getServletPath());
   }
 
   @Override
