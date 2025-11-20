@@ -5,6 +5,11 @@ spring:
     import:
       - classpath:application-common.yml
       - classpath:application-database.yml
+#  TODO: ライブラリが出揃って適切に修正すれば不要になりそう
+  autoconfigure:
+    exclude:
+      - org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration
+      - org.mybatis.spring.boot.autoconfigure.MybatisLanguageDriverAutoConfiguration
 
 # for local / ut
 ---

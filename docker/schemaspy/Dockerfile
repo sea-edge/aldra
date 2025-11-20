@@ -1,6 +1,8 @@
-FROM openjdk:17-alpine3.14
+FROM eclipse-temurin:17-jdk-jammy
 
-RUN apk add --no-cache curl unzip graphviz fontconfig
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl unzip graphviz fontconfig && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/share/fonts/open-sans
 COPY open-sans.zip .

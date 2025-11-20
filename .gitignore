@@ -33,9 +33,10 @@ node_modules
 # Build directory
 build/
 dist/
+META-INF/**
 
 # Ignore Gradle build output directory
 build
 
-# direnv file
-.envrc
+# Local environment overrides
+.mise.local.toml

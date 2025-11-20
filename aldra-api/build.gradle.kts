@@ -32,6 +32,13 @@ dependencies {
     implementation(libs.jakarta.validation)
     implementation(project(":common"))
     implementation(project(":database"))
+
+    // Jackson datatype modules
+    implementation(libs.jackson.datatype.jdk8)
+    implementation(libs.jackson.datatype.jsr310)
+
+    // JDBC for DataSource
+    implementation(libs.spring.boot.starter.jdbc)
 }
 
 sourceSets {
@@ -46,7 +53,7 @@ spotless {
     encoding("UTF-8")
     java {
         targetExclude("build/openapi/gen-src/main/java/**")
-        indentWithSpaces()
+        leadingTabsToSpaces()
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()
@@ -60,10 +67,14 @@ tasks.register<GenerateTask>("oaGenerate") {
     inputSpec.set("${projectDir}/openapi/index.yml")
     outputDir.set("${layout.buildDirectory.get()}/openapi")
     typeMappings.set(mapOf(
-        "string+local-date" to "LocalDate",
-        "string+local-datetime" to "LocalDateTime"
+        "local-date" to "LocalDate",
+        "local-datetime" to "LocalDateTime"
     ))
     importMappings.set(mapOf(
+        "LocalDate" to "java.time.LocalDate",
+        "LocalDateTime" to "java.time.LocalDateTime"
+    ))
+    schemaMappings.set(mapOf(
         "LocalDate" to "java.time.LocalDate",
         "LocalDateTime" to "java.time.LocalDateTime"
     ))
@@ -81,17 +92,30 @@ tasks.register<GenerateTask>("oaGenerate") {
         "openApiNullable" to "false",
         "useTags" to "true",
         "disallowAdditionalPropertiesIfNotPresent" to "false",
-        "useBeanValidation" to "false"
+        "useBeanValidation" to "false",
+        "useJakartaEe" to "true",
+        "additionalModelTypeAnnotations" to "@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)"
     ))
+}
+
+tasks.named("compileJava") {
+    dependsOn("oaGenerate")
 }
 
 tasks.named<BootRun>("bootRun") {
     doFirst {
-        file("${rootDir}/.envrc").readLines().forEach {
-            val parts = it.split(" ")[1].split("=")
-            val key = parts[0]
-            val value = parts[1]
-            environment(key, value)
+        val envFile = file("${rootDir}/.envrc")
+        if (envFile.exists()) {
+            envFile.readLines()
+                .filter { it.isNotBlank() && it.contains("=") }
+                .mapNotNull { line ->
+                    val parts = line.split(" ", limit = 2)
+                    if (parts.size > 1) parts[1] else null
+                }
+                .forEach { envLine ->
+                    val (key, value) = envLine.split("=", limit = 2)
+                    environment(key, value)
+                }
         }
     }
 }

@@ -1,10 +1,38 @@
 import com.diffplug.gradle.spotless.SpotlessExtension
+import org.gradle.api.GradleException
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath(libs.flyway.database.postgresql)
+    }
+}
 
 plugins {
+    java
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.flyway)
     alias(libs.plugins.spotless)
 }
+
+val prettierPluginXmlVersion = libs.versions.prettier.plugin.xml.get()
+
+fun resolveDbConfig(propName: String, envName: String): String? =
+    providers.gradleProperty(propName)
+        .orElse(providers.environmentVariable(envName))
+        .orNull
+        ?.takeIf { it.isNotBlank() }
+
+fun requireDbConfig(propName: String, envName: String, description: String): String =
+    resolveDbConfig(propName, envName)
+        ?: throw GradleException("$description is missing. Set $envName or provide -P$propName.")
+
+val dbJdbcDriver = resolveDbConfig("dbJdbcDriver", "DB_JDBC_DRIVER")
+val dbJdbcUrl = resolveDbConfig("dbJdbcUrl", "DB_JDBC_URL")
+val dbUser = resolveDbConfig("dbUser", "DB_USER")
+val dbPassword = resolveDbConfig("dbPassword", "DB_PASSWORD")
 
 val mbGenerate by configurations.creating
 val myBatisGenerator by configurations.creating
@@ -32,7 +60,7 @@ dependencies {
     implementation(libs.postgresql)
     implementation(libs.mybatis.spring.boot.starter)
     mbGenerate(libs.postgresql)
-    myBatisGenerator("org.mybatis.generator:mybatis-generator-core:1.4.2")
+    myBatisGenerator(libs.mybatis.generator.core)
 }
 
 sourceSets {
@@ -47,7 +75,7 @@ configure<SpotlessExtension> {
     encoding("UTF-8")
     java {
         targetExclude("build/mybatis/gen-src/main/java/**")
-        indentWithSpaces()
+        leadingTabsToSpaces()
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()
@@ -55,23 +83,15 @@ configure<SpotlessExtension> {
     }
     format("xml") {
         target("config/generator-config.xml", "src/**/*.xml")
-        // https://github.com/prettier/plugin-xml
-        prettier(mapOf("@prettier/plugin-xml" to "2.1.0"))
-            .config(mapOf(
-                "useTabs" to false,
-                "tabWidth" to 4,
-                "printWidth" to 120,
-                "xmlWhitespaceSensitivity" to "strict",
-                "singleAttributePerLine" to true
-            ))
+        eclipseWtp(com.diffplug.spotless.extra.wtp.EclipseWtpFormatterStep.XML)
     }
 }
 
 flyway {
-    driver = System.getenv("DB_JDBC_DRIVER")
-    url = System.getenv("DB_JDBC_URL")
-    user = System.getenv("DB_USER")
-    password = System.getenv("DB_PASSWORD")
+    driver = dbJdbcDriver
+    url = dbJdbcUrl
+    user = dbUser
+    password = dbPassword
     locations = arrayOf("filesystem:${projectDir.path}/migrations")
 }
 
@@ -81,10 +101,10 @@ tasks.register("mbGenerate") {
     }
     doLast {
         val generatorProps = mapOf(
-            "driverClassName" to System.getenv("DB_JDBC_DRIVER"),
-            "url" to System.getenv("DB_JDBC_URL"),
-            "username" to System.getenv("DB_USER"),
-            "password" to System.getenv("DB_PASSWORD"),
+            "driverClassName" to requireDbConfig("dbJdbcDriver", "DB_JDBC_DRIVER", "JDBC driver"),
+            "url" to requireDbConfig("dbJdbcUrl", "DB_JDBC_URL", "JDBC url"),
+            "username" to requireDbConfig("dbUser", "DB_USER", "DB user"),
+            "password" to requireDbConfig("dbPassword", "DB_PASSWORD", "DB password"),
             "targetProject" to "${layout.buildDirectory.get().asFile.path}/mybatis/gen-src/main/java",
             "targetEntityPackage" to "aldra.database.domain.entity",
             "targetMapperPackage" to "aldra.database.domain.repository"

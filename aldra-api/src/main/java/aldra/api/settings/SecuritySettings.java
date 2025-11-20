@@ -13,10 +13,10 @@ import aldra.api.framework.interceptor.WebAPIAccessLogFilter;
 import aldra.common.settings.AWSSettings;
 import aldra.common.utils.CognitoHelper;
 import aldra.database.domain.repository.user.AuthorityMapper;
-import java.util.Arrays;
-import java.util.List;
 import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.val;
@@ -62,9 +62,9 @@ public class SecuritySettings {
     preAuthProvider.setPreAuthenticatedUserDetailsService(
         new JWTAuthorizationUserDetailsService(awsSettings, authorityMapper));
     // for authentication endpoint
-    val authenticationProvider = new CognitoAuthenticationProvider(cognitoHelper);
-    authenticationProvider.setUserDetailsService(
-        new CognitoAuthenticationUserDetailsService(cognitoHelper));
+    val authenticationProvider =
+        new CognitoAuthenticationProvider(
+            cognitoHelper, new CognitoAuthenticationUserDetailsService(cognitoHelper));
     return new ProviderManager(preAuthProvider, authenticationProvider);
   }
 

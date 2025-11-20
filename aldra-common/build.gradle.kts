@@ -27,7 +27,7 @@ dependencies {
 spotless {
     encoding("UTF-8")
     java {
-        indentWithSpaces()
+        leadingTabsToSpaces()
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()
