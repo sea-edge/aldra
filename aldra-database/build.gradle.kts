@@ -17,6 +17,14 @@ plugins {
     alias(libs.plugins.spotless)
 }
 
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    enabled = false
+}
+
+tasks.named<Jar>("jar") {
+    enabled = true
+}
+
 val prettierPluginXmlVersion = libs.versions.prettier.plugin.xml.get()
 
 fun resolveDbConfig(propName: String, envName: String): String? =
@@ -112,7 +120,7 @@ tasks.register("mbGenerate") {
 
         ant.withGroovyBuilder {
             generatorProps.forEach { (name, value) ->
-                "property"("name" to name, "value" to (value ?: ""))
+                "property"("name" to name, "value" to value)
             }
 
             "taskdef"(
