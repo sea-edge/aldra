@@ -1,33 +1,33 @@
 plugins {
-    id("com.diffplug.spotless") version "6.25.0"
+    alias(libs.plugins.spotless)
 }
 
 dependencies {
     // Common dependencies
-    compileOnly("org.projectlombok:lombok:1.18.36")
-    annotationProcessor("org.projectlombok:lombok:1.18.36")
-    testCompileOnly("org.projectlombok:lombok:1.18.36")
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.36")
-    implementation("com.google.guava:guava:33.3.1-jre")
-    implementation("org.apache.commons:commons-lang3:3.17.0")
-    implementation("org.apache.commons:commons-collections4:4.5.0-M2")
-    implementation("commons-io:commons-io:2.18.0")
-    implementation("com.amazonaws:aws-java-sdk-cognitoidp:1.12.780")
-    implementation("com.amazonaws:aws-java-sdk-s3:1.12.780")
-    implementation("com.auth0:java-jwt:4.4.0")
-    implementation("com.auth0:jwks-rsa:0.22.1")
-    testImplementation("org.springframework.boot:spring-boot-starter-test:3.4.0")
-    
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+    testCompileOnly(libs.lombok)
+    testAnnotationProcessor(libs.lombok)
+    implementation(libs.guava)
+    implementation(libs.commons.lang3)
+    implementation(libs.commons.collections4)
+    implementation(libs.commons.io)
+    implementation(libs.aws.cognito)
+    implementation(libs.aws.s3)
+    implementation(libs.auth0.jwt)
+    implementation(libs.auth0.jwks)
+    testImplementation(libs.spring.boot.starter.test)
+
     // Module-specific dependencies
-    implementation("org.springframework.boot:spring-boot-configuration-processor:3.4.0")
-    implementation("org.springframework.boot:spring-boot-autoconfigure:3.4.0")
-    implementation("org.springframework.boot:spring-boot-starter-logging:3.4.0")
+    implementation(libs.spring.boot.configuration.processor)
+    implementation(libs.spring.boot.autoconfigure)
+    implementation(libs.spring.boot.starter.logging)
 }
 
 spotless {
     encoding("UTF-8")
     java {
-        indentWithSpaces()
+        leadingTabsToSpaces()
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()

@@ -1,0 +1,58 @@
+[versions]
+gradle = "9.2.1"
+spring-boot = "4.0.0-RC2"
+spring-dependency-management = "1.1.7"
+spotless = "8.1.0"
+openapi-generator = "7.10.0"
+flyway = "11.17.0"
+lombok = "1.18.42"
+guava = "33.3.1-jre"
+commons-lang3 = "3.20.0"
+commons-collections4 = "4.5.0-M2"
+commons-io = "2.18.0"
+aws-sdk = "1.12.780"
+auth0-jwt = "4.4.0"
+auth0-jwks = "0.22.1"
+swagger = "2.2.26"
+jakarta-validation = "3.1.0"
+postgresql = "42.7.4"
+mybatis = "3.0.5"
+mybatis-generator = "1.4.2"
+prettier-plugin-xml = "2.1.0"
+java = "25"
+
+[libraries]
+lombok = { group = "org.projectlombok", name = "lombok", version.ref = "lombok" }
+guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
+commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version.ref = "commons-lang3" }
+commons-collections4 = { group = "org.apache.commons", name = "commons-collections4", version.ref = "commons-collections4" }
+commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
+aws-cognito = { group = "com.amazonaws", name = "aws-java-sdk-cognitoidp", version.ref = "aws-sdk" }
+aws-s3 = { group = "com.amazonaws", name = "aws-java-sdk-s3", version.ref = "aws-sdk" }
+auth0-jwt = { group = "com.auth0", name = "java-jwt", version.ref = "auth0-jwt" }
+auth0-jwks = { group = "com.auth0", name = "jwks-rsa", version.ref = "auth0-jwks" }
+swagger-annotations = { group = "io.swagger.core.v3", name = "swagger-annotations", version.ref = "swagger" }
+jakarta-validation = { group = "jakarta.validation", name = "jakarta.validation-api", version.ref = "jakarta-validation" }
+spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test" }
+spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web" }
+spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator" }
+spring-boot-starter-security = { group = "org.springframework.boot", name = "spring-boot-starter-security" }
+spring-boot-starter-batch = { group = "org.springframework.boot", name = "spring-boot-starter-batch" }
+spring-boot-starter-logging = { group = "org.springframework.boot", name = "spring-boot-starter-logging" }
+spring-boot-starter-jdbc = { group = "org.springframework.boot", name = "spring-boot-starter-jdbc" }
+spring-boot-configuration-processor = { group = "org.springframework.boot", name = "spring-boot-configuration-processor" }
+spring-boot-autoconfigure = { group = "org.springframework.boot", name = "spring-boot-autoconfigure" }
+jackson-datatype-jdk8 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jdk8" }
+jackson-datatype-jsr310 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310" }
+spring-tx = { group = "org.springframework", name = "spring-tx" }
+postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
+mybatis-spring-boot-starter = { group = "org.mybatis.spring.boot", name = "mybatis-spring-boot-starter", version.ref = "mybatis" }
+mybatis-generator-core = { group = "org.mybatis.generator", name = "mybatis-generator-core", version.ref = "mybatis-generator" }
+flyway-database-postgresql = { group = "org.flywaydb", name = "flyway-database-postgresql", version.ref = "flyway" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+openapi-generator = { id = "org.openapi.generator", version.ref = "openapi-generator" }
+flyway = { id = "org.flywaydb.flyway", version.ref = "flyway" }

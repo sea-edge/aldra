@@ -3,6 +3,8 @@ package aldra.database.settings;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import javax.sql.DataSource;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -35,5 +37,13 @@ public class DataSourceSettings {
     config.setConnectionTimeout(props.getConnectionTimeout());
     config.setLeakDetectionThreshold(props.getLeakDetectionThreshold());
     return new HikariDataSource(config);
+  }
+
+  @Bean
+  public SqlSessionFactory sqlSessionFactory(@Qualifier("dataSource") DataSource dataSource)
+      throws Exception {
+    SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+    factoryBean.setDataSource(dataSource);
+    return factoryBean.getObject();
   }
 }

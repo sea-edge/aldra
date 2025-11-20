@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
@@ -20,7 +21,6 @@ import java.util.TimeZone;
 import lombok.val;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 public class JacksonSettings {
 
@@ -44,19 +44,33 @@ public class JacksonSettings {
   }
 
   private ObjectMapper configureCommonSettings() {
-    return new Jackson2ObjectMapperBuilder() //
-        .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE) //
-        .featuresToDisable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES) //
-        .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS) //
-        .featuresToEnable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL) //
-        .modules(new JavaTimeModule(), new Jdk8Module()) //
-        .timeZone(TimeZone.getTimeZone(ZoneId.of("Asia/Tokyo"))) //
-        .serializerByType(LocalDate.class, new LocalDateSerializer(DATE_FORMAT)) //
-        .serializerByType(LocalDateTime.class, new LocalDateTimeSerializer(DATE_TIME_FORMAT)) //
-        .deserializerByType(LocalDate.class, new LocalDateDeserializer(DATE_FORMAT)) //
-        .deserializerByType(
-            LocalDateTime.class, new LocalDateTimeDeserializer(DATE_TIME_FORMAT)) //
-        .locale(Locale.JAPAN) //
-        .build();
+    ObjectMapper mapper = new ObjectMapper();
+
+    // Property naming strategy
+    mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+
+    // Features configuration
+    mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+    mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    mapper.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL);
+
+    // Timezone and locale
+    mapper.setTimeZone(TimeZone.getTimeZone(ZoneId.of("Asia/Tokyo")));
+    mapper.setLocale(Locale.JAPAN);
+
+    // Register modules
+    mapper.registerModule(new JavaTimeModule());
+    mapper.registerModule(new Jdk8Module());
+
+    // Custom date/time serializers and deserializers
+    SimpleModule customModule = new SimpleModule();
+    customModule.addSerializer(LocalDate.class, new LocalDateSerializer(DATE_FORMAT));
+    customModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(DATE_TIME_FORMAT));
+    customModule.addDeserializer(LocalDate.class, new LocalDateDeserializer(DATE_FORMAT));
+    customModule.addDeserializer(
+        LocalDateTime.class, new LocalDateTimeDeserializer(DATE_TIME_FORMAT));
+    mapper.registerModule(customModule);
+
+    return mapper;
   }
 }

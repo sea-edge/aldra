@@ -2,37 +2,43 @@ import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 import org.springframework.boot.gradle.tasks.run.BootRun
 
 plugins {
-    id("org.springframework.boot") version "3.4.0"
-    id("com.diffplug.spotless") version "6.25.0"
-    id("org.openapi.generator") version "7.10.0"
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spotless)
+    alias(libs.plugins.openapi.generator)
 }
 
 dependencies {
     // Common dependencies
-    compileOnly("org.projectlombok:lombok:1.18.36")
-    annotationProcessor("org.projectlombok:lombok:1.18.36")
-    testCompileOnly("org.projectlombok:lombok:1.18.36")
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.36")
-    implementation("com.google.guava:guava:33.3.1-jre")
-    implementation("org.apache.commons:commons-lang3:3.17.0")
-    implementation("org.apache.commons:commons-collections4:4.5.0-M2")
-    implementation("commons-io:commons-io:2.18.0")
-    implementation("com.amazonaws:aws-java-sdk-cognitoidp:1.12.780")
-    implementation("com.amazonaws:aws-java-sdk-s3:1.12.780")
-    implementation("com.auth0:java-jwt:4.4.0")
-    implementation("com.auth0:jwks-rsa:0.22.1")
-    testImplementation("org.springframework.boot:spring-boot-starter-test:3.4.0")
-    
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+    testCompileOnly(libs.lombok)
+    testAnnotationProcessor(libs.lombok)
+    implementation(libs.guava)
+    implementation(libs.commons.lang3)
+    implementation(libs.commons.collections4)
+    implementation(libs.commons.io)
+    implementation(libs.aws.cognito)
+    implementation(libs.aws.s3)
+    implementation(libs.auth0.jwt)
+    implementation(libs.auth0.jwks)
+    testImplementation(libs.spring.boot.starter.test)
+
     // Module-specific dependencies
-    implementation("org.springframework.boot:spring-boot-starter-web:3.4.0")
-    implementation("org.springframework.boot:spring-boot-starter-actuator:3.4.0")
-    implementation("org.springframework.boot:spring-boot-starter-security:3.4.0")
-    implementation("org.springframework:spring-tx:6.2.0")
-    implementation("io.swagger.core.v3:swagger-annotations:2.2.26")
-    // FIXME https://github.com/OpenAPITools/openapi-generator/issues/12603
-    implementation("jakarta.validation:jakarta.validation-api:3.1.0")
+    implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.actuator)
+    implementation(libs.spring.boot.starter.security)
+    implementation(libs.spring.tx)
+    implementation(libs.swagger.annotations)
+    implementation(libs.jakarta.validation)
     implementation(project(":common"))
     implementation(project(":database"))
+
+    // Jackson datatype modules
+    implementation(libs.jackson.datatype.jdk8)
+    implementation(libs.jackson.datatype.jsr310)
+
+    // JDBC for DataSource
+    implementation(libs.spring.boot.starter.jdbc)
 }
 
 sourceSets {
@@ -47,7 +53,7 @@ spotless {
     encoding("UTF-8")
     java {
         targetExclude("build/openapi/gen-src/main/java/**")
-        indentWithSpaces()
+        leadingTabsToSpaces()
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()
@@ -61,10 +67,14 @@ tasks.register<GenerateTask>("oaGenerate") {
     inputSpec.set("${projectDir}/openapi/index.yml")
     outputDir.set("${layout.buildDirectory.get()}/openapi")
     typeMappings.set(mapOf(
-        "string+local-date" to "LocalDate",
-        "string+local-datetime" to "LocalDateTime"
+        "local-date" to "LocalDate",
+        "local-datetime" to "LocalDateTime"
     ))
     importMappings.set(mapOf(
+        "LocalDate" to "java.time.LocalDate",
+        "LocalDateTime" to "java.time.LocalDateTime"
+    ))
+    schemaMappings.set(mapOf(
         "LocalDate" to "java.time.LocalDate",
         "LocalDateTime" to "java.time.LocalDateTime"
     ))
@@ -82,17 +92,30 @@ tasks.register<GenerateTask>("oaGenerate") {
         "openApiNullable" to "false",
         "useTags" to "true",
         "disallowAdditionalPropertiesIfNotPresent" to "false",
-        "useBeanValidation" to "false"
+        "useBeanValidation" to "false",
+        "useJakartaEe" to "true",
+        "additionalModelTypeAnnotations" to "@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)"
     ))
+}
+
+tasks.named("compileJava") {
+    dependsOn("oaGenerate")
 }
 
 tasks.named<BootRun>("bootRun") {
     doFirst {
-        file("${rootDir}/.envrc").readLines().forEach {
-            val parts = it.split(" ")[1].split("=")
-            val key = parts[0]
-            val value = parts[1]
-            environment(key, value)
+        val envFile = file("${rootDir}/.envrc")
+        if (envFile.exists()) {
+            envFile.readLines()
+                .filter { it.isNotBlank() && it.contains("=") }
+                .mapNotNull { line ->
+                    val parts = line.split(" ", limit = 2)
+                    if (parts.size > 1) parts[1] else null
+                }
+                .forEach { envLine ->
+                    val (key, value) = envLine.split("=", limit = 2)
+                    environment(key, value)
+                }
         }
     }
 }

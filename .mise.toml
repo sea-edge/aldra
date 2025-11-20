@@ -1,0 +1,9 @@
+[tools]
+java = "25"
+
+[env]
+COMPOSE_FILE = "docker/postgresql.yml:docker/minio.yml:docker/swagger.yml:docker/schemaspy.yml"
+CLOCK_FIXED = "false"
+CLOCK_TIME_ZONE = "Asia/Tokyo"
+DB_JDBC_DRIVER = "org.postgresql.Driver"
+

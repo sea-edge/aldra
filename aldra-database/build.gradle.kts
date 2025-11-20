@@ -1,34 +1,74 @@
 import com.diffplug.gradle.spotless.SpotlessExtension
+import org.gradle.api.GradleException
 
-plugins {
-    id("com.diffplug.spotless") version "6.25.0"
-    id("org.flywaydb.flyway") version "11.0.0"
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath(libs.flyway.database.postgresql)
+    }
 }
 
+plugins {
+    java
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.flyway)
+    alias(libs.plugins.spotless)
+}
+
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    enabled = false
+}
+
+tasks.named<Jar>("jar") {
+    enabled = true
+}
+
+val prettierPluginXmlVersion = libs.versions.prettier.plugin.xml.get()
+
+fun resolveDbConfig(propName: String, envName: String): String? =
+    providers.gradleProperty(propName)
+        .orElse(providers.environmentVariable(envName))
+        .orNull
+        ?.takeIf { it.isNotBlank() }
+
+fun requireDbConfig(propName: String, envName: String, description: String): String =
+    resolveDbConfig(propName, envName)
+        ?: throw GradleException("$description is missing. Set $envName or provide -P$propName.")
+
+val dbJdbcDriver = resolveDbConfig("dbJdbcDriver", "DB_JDBC_DRIVER")
+val dbJdbcUrl = resolveDbConfig("dbJdbcUrl", "DB_JDBC_URL")
+val dbUser = resolveDbConfig("dbUser", "DB_USER")
+val dbPassword = resolveDbConfig("dbPassword", "DB_PASSWORD")
+
 val mbGenerate by configurations.creating
+val myBatisGenerator by configurations.creating
+
+configurations {
+    mbGenerate.extendsFrom(myBatisGenerator)
+}
 
 dependencies {
     // Common dependencies
-    compileOnly("org.projectlombok:lombok:1.18.36")
-    annotationProcessor("org.projectlombok:lombok:1.18.36")
-    testCompileOnly("org.projectlombok:lombok:1.18.36")
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.36")
-    implementation("com.google.guava:guava:33.3.1-jre")
-    implementation("org.apache.commons:commons-lang3:3.17.0")
-    implementation("org.apache.commons:commons-collections4:4.5.0-M2")
-    implementation("commons-io:commons-io:2.18.0")
-    implementation("com.amazonaws:aws-java-sdk-cognitoidp:1.12.780")
-    implementation("com.amazonaws:aws-java-sdk-s3:1.12.780")
-    implementation("com.auth0:java-jwt:4.4.0")
-    implementation("com.auth0:jwks-rsa:0.22.1")
-    testImplementation("org.springframework.boot:spring-boot-starter-test:3.4.0")
-    
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+    testCompileOnly(libs.lombok)
+    testAnnotationProcessor(libs.lombok)
+    implementation(libs.guava)
+    implementation(libs.commons.lang3)
+    implementation(libs.commons.collections4)
+    implementation(libs.commons.io)
+    implementation(libs.aws.cognito)
+    implementation(libs.aws.s3)
+    implementation(libs.auth0.jwt)
+    implementation(libs.auth0.jwks)
+    testImplementation(libs.spring.boot.starter.test)
     // Module-specific dependencies
-    implementation("org.postgresql:postgresql:42.7.4")
-    implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4")
-
-    mbGenerate("org.postgresql:postgresql:42.7.4")
-    mbGenerate("org.mybatis.generator:mybatis-generator-core:1.4.2")
+    implementation(libs.postgresql)
+    implementation(libs.mybatis.spring.boot.starter)
+    mbGenerate(libs.postgresql)
+    myBatisGenerator(libs.mybatis.generator.core)
 }
 
 sourceSets {
@@ -43,7 +83,7 @@ configure<SpotlessExtension> {
     encoding("UTF-8")
     java {
         targetExclude("build/mybatis/gen-src/main/java/**")
-        indentWithSpaces()
+        leadingTabsToSpaces()
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()
@@ -51,23 +91,15 @@ configure<SpotlessExtension> {
     }
     format("xml") {
         target("config/generator-config.xml", "src/**/*.xml")
-        // https://github.com/prettier/plugin-xml
-        prettier(mapOf("@prettier/plugin-xml" to "2.1.0"))
-            .config(mapOf(
-                "useTabs" to false,
-                "tabWidth" to 4,
-                "printWidth" to 120,
-                "xmlWhitespaceSensitivity" to "strict",
-                "singleAttributePerLine" to true
-            ))
+        eclipseWtp(com.diffplug.spotless.extra.wtp.EclipseWtpFormatterStep.XML)
     }
 }
 
 flyway {
-    driver = System.getenv("DB_JDBC_DRIVER")
-    url = System.getenv("DB_JDBC_URL")
-    user = System.getenv("DB_USER")
-    password = System.getenv("DB_PASSWORD")
+    driver = dbJdbcDriver
+    url = dbJdbcUrl
+    user = dbUser
+    password = dbPassword
     locations = arrayOf("filesystem:${projectDir.path}/migrations")
 }
 
@@ -76,36 +108,42 @@ tasks.register("mbGenerate") {
         file("${layout.buildDirectory.get()}/mybatis/gen-src/main/java").mkdirs()
     }
     doLast {
+        val generatorProps = mapOf(
+            "driverClassName" to requireDbConfig("dbJdbcDriver", "DB_JDBC_DRIVER", "JDBC driver"),
+            "url" to requireDbConfig("dbJdbcUrl", "DB_JDBC_URL", "JDBC url"),
+            "username" to requireDbConfig("dbUser", "DB_USER", "DB user"),
+            "password" to requireDbConfig("dbPassword", "DB_PASSWORD", "DB password"),
+            "targetProject" to "${layout.buildDirectory.get().asFile.path}/mybatis/gen-src/main/java",
+            "targetEntityPackage" to "aldra.database.domain.entity",
+            "targetMapperPackage" to "aldra.database.domain.repository"
+        )
+
         ant.withGroovyBuilder {
-            "properties"("driverClassName" to System.getenv("DB_JDBC_DRIVER"))
-            "properties"("url" to System.getenv("DB_JDBC_URL"))
-            "properties"("username" to System.getenv("DB_USER"))
-            "properties"("password" to System.getenv("DB_PASSWORD"))
-            "properties"("targetProject" to "${layout.buildDirectory.get().asFile.path}/mybatis/gen-src/main/java")
-            "properties"("targetEntityPackage" to "aldra.database.domain.entity")
-            "properties"("targetMapperPackage" to "aldra.database.domain.repository")
-            
+            generatorProps.forEach { (name, value) ->
+                "property"("name" to name, "value" to value)
+            }
+
             "taskdef"(
                 "name" to "mbGenerator",
                 "classname" to "org.mybatis.generator.ant.GeneratorAntTask",
-                "classpath" to mbGenerate.asPath
+                "classpath" to configurations["myBatisGenerator"].plus(mbGenerate).asPath
             )
-            
+
             "mbGenerator"(
                 "overwrite" to true,
                 "configFile" to "${projectDir.path}/config/generator-config.xml",
                 "verbose" to true
             ) {
                 "propertyset" {
-                    "propertyref"("name" to "driverClassName")
-                    "propertyref"("name" to "url")
-                    "propertyref"("name" to "username")
-                    "propertyref"("name" to "password")
-                    "propertyref"("name" to "targetProject")
-                    "propertyref"("name" to "targetEntityPackage")
-                    "propertyref"("name" to "targetMapperPackage")
+                    generatorProps.keys.forEach { key ->
+                        "propertyref"("name" to key)
+                    }
                 }
             }
         }
     }
+}
+
+tasks.named("compileJava") {
+    dependsOn("mbGenerate")
 }

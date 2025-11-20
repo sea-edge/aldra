@@ -36,24 +36,32 @@ Database implementation (use MyBatis)
   $ docker --version
   Docker version 20.10.12, build e91ed57
   ```
-- direnv
+- mise
   ```sh
-  $ direnv --version
-  2.28.0
+  $ mise --version
+  mise 2025.x.y (or newer)
   ```
 
 ## Setup
 
-### Activate direnv
-
-```sh
-$ cp .envrc.origin .envrc
-$ direnv allow
-```
-
-### Launch middleware
-
-```sh
-$ docker compose build
-$ docker compose up -d
-```
+1. Install [mise](https://mise.jdx.dev/) and add `eval "$(mise activate zsh)"` (or bash/fish equivalent) to your shell rc so the toolchain & env vars load automatically inside this repo.
+2. Copy the local override template and fill in your secrets.
+   ```sh
+   cp .mise.local.example .mise.local.toml
+   $EDITOR .mise.local.toml   # set DB_* and AWS values used by Gradle & Docker
+   ```
+3. Install the pinned toolchain and trust the project manifest.
+   ```sh
+   mise install
+   mise trust
+   ```
+4. Launch middleware
+    ```sh
+    $ docker compose build
+    $ docker compose up -d
+    ```
+5. Provision the database schema / generators.
+   ```sh
+   ./gradlew :database:flywayMigrate
+   ./gradlew :database:mbGenerate
+   ```

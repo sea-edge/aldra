@@ -1,4 +1,3 @@
-version: '3.9'
 
 services:
   schemaspy:
@@ -28,7 +27,7 @@ services:
 
   erd:
     container_name: aldra-erd
-    image: nginx:stable
+    image: nginx:alpine
     ports:
       - '8082:80'
     volumes:

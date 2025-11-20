@@ -9,7 +9,6 @@ import com.amazonaws.services.cognitoidp.model.PasswordResetRequiredException;
 import com.amazonaws.services.cognitoidp.model.UserNotFoundException;
 import java.util.Objects;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
@@ -17,12 +16,18 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 @Slf4j
-@RequiredArgsConstructor
 public class CognitoAuthenticationProvider extends DaoAuthenticationProvider {
 
   private final CognitoHelper cognitoHelper;
+
+  public CognitoAuthenticationProvider(
+      CognitoHelper cognitoHelper, UserDetailsService userDetailsService) {
+    super(userDetailsService);
+    this.cognitoHelper = cognitoHelper;
+  }
 
   @Override
   protected void additionalAuthenticationChecks(
