@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:24-alpine
 
 RUN npm install -g chokidar swagger-merger
 
