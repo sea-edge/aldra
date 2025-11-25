@@ -11,7 +11,7 @@ buildscript {
 }
 
 plugins {
-    java
+    `java-library`
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.flyway)
     alias(libs.plugins.spotless)
@@ -66,7 +66,7 @@ dependencies {
     testImplementation(libs.spring.boot.starter.test)
     // Module-specific dependencies
     implementation(libs.postgresql)
-    implementation(libs.mybatis.spring.boot.starter)
+    api(libs.mybatis.spring.boot.starter)
     mbGenerate(libs.postgresql)
     myBatisGenerator(libs.mybatis.generator.core)
 }
