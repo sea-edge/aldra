@@ -1,6 +1,5 @@
 package aldra.api.framework.auth;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -12,9 +11,12 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.AntPathMatcher;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 public class CognitoAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
+
+  private static final JsonMapper JSON_MAPPER = JsonMapper.builder().build();
 
   public CognitoAuthenticationFilter(String pathPattern, String httpMethod) {
     super(createRequestMatcher(pathPattern, httpMethod));
@@ -32,8 +34,7 @@ public class CognitoAuthenticationFilter extends AbstractAuthenticationProcessin
   public Authentication attemptAuthentication(
       HttpServletRequest request, HttpServletResponse response)
       throws AuthenticationException, IOException {
-    val mapper = new ObjectMapper();
-    val dto = mapper.readValue(request.getInputStream(), LoginRequest.class);
+    val dto = JSON_MAPPER.readValue(request.getInputStream(), LoginRequest.class);
     val token = new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword());
     token.setDetails(authenticationDetailsSource.buildDetails(request));
     return getAuthenticationManager().authenticate(token);

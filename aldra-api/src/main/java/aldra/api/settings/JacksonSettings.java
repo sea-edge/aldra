@@ -1,17 +1,6 @@
 package aldra.api.settings;
 
 import aldra.api.framework.jackson.IgnoreLoggingIntrospector;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -21,6 +10,17 @@ import java.util.TimeZone;
 import lombok.val;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.cfg.EnumFeature;
+import tools.jackson.databind.ext.javatime.deser.LocalDateDeserializer;
+import tools.jackson.databind.ext.javatime.deser.LocalDateTimeDeserializer;
+import tools.jackson.databind.ext.javatime.ser.LocalDateSerializer;
+import tools.jackson.databind.ext.javatime.ser.LocalDateTimeSerializer;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 public class JacksonSettings {
 
@@ -33,44 +33,33 @@ public class JacksonSettings {
   @Primary
   @Bean
   public ObjectMapper objectMapper() {
-    return configureCommonSettings();
+    return configureCommonSettings().build();
   }
 
   @Bean(name = "loggingObjectMapper")
   public ObjectMapper loggingObjectMapper() {
-    val mapper = configureCommonSettings();
-    mapper.setAnnotationIntrospector(new IgnoreLoggingIntrospector());
-    return mapper;
+    return configureCommonSettings()
+        .annotationIntrospector(new IgnoreLoggingIntrospector())
+        .build();
   }
 
-  private ObjectMapper configureCommonSettings() {
-    ObjectMapper mapper = new ObjectMapper();
+  private JsonMapper.Builder configureCommonSettings() {
+    val customModule =
+        new SimpleModule()
+            .addSerializer(LocalDate.class, new LocalDateSerializer(DATE_FORMAT))
+            .addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(DATE_TIME_FORMAT))
+            .addDeserializer(LocalDate.class, new LocalDateDeserializer(DATE_FORMAT))
+            .addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(DATE_TIME_FORMAT));
 
-    // Property naming strategy
-    mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-
-    // Features configuration
-    mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-    mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    mapper.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL);
-
-    // Timezone and locale
-    mapper.setTimeZone(TimeZone.getTimeZone(ZoneId.of("Asia/Tokyo")));
-    mapper.setLocale(Locale.JAPAN);
-
-    // Register modules
-    mapper.registerModule(new JavaTimeModule());
-    mapper.registerModule(new Jdk8Module());
-
-    // Custom date/time serializers and deserializers
-    SimpleModule customModule = new SimpleModule();
-    customModule.addSerializer(LocalDate.class, new LocalDateSerializer(DATE_FORMAT));
-    customModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(DATE_TIME_FORMAT));
-    customModule.addDeserializer(LocalDate.class, new LocalDateDeserializer(DATE_FORMAT));
-    customModule.addDeserializer(
-        LocalDateTime.class, new LocalDateTimeDeserializer(DATE_TIME_FORMAT));
-    mapper.registerModule(customModule);
-
-    return mapper;
+    return JsonMapper.builder()
+        .defaultLocale(Locale.JAPAN)
+        .defaultTimeZone(TimeZone.getTimeZone(ZoneId.of("Asia/Tokyo")))
+        .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+        .disable(DateTimeFeature.WRITE_DATE_KEYS_AS_TIMESTAMPS)
+        .disable(DateTimeFeature.WRITE_DURATIONS_AS_TIMESTAMPS)
+        .enable(EnumFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL)
+        .addModule(customModule);
   }
 }

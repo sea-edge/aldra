@@ -39,8 +39,20 @@ subprojects {
         }
     }
 
+    configurations.all {
+        resolutionStrategy {
+            force(
+                "tools.jackson.core:jackson-core:${libsCatalog.findVersion("jackson").get().requiredVersion}",
+                "tools.jackson.core:jackson-databind:${libsCatalog.findVersion("jackson").get().requiredVersion}",
+                "tools.jackson.datatype:jackson-datatype-jdk8:${libsCatalog.findVersion("jackson").get().requiredVersion}",
+                "tools.jackson.datatype:jackson-datatype-jsr310:${libsCatalog.findVersion("jackson").get().requiredVersion}"
+            )
+        }
+    }
+
     repositories {
         mavenCentral()
+        maven("https://oss.sonatype.org/content/repositories/snapshots/")
     }
 
     tasks.withType<JavaCompile> {

@@ -33,9 +33,8 @@ dependencies {
     implementation(project(":common"))
     implementation(project(":database"))
 
-    // Jackson datatype modules
-    implementation(libs.jackson.datatype.jdk8)
-    implementation(libs.jackson.datatype.jsr310)
+    implementation(libs.jackson.databind)
+    implementation(libs.jackson.core)
 
     // JDBC for DataSource
     implementation(libs.spring.boot.starter.jdbc)
