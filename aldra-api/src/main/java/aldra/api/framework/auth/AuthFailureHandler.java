@@ -2,7 +2,6 @@ package aldra.api.framework.auth;
 
 import aldra.api.adapter.web.dto.ErrorCode;
 import aldra.api.adapter.web.dto.ExceptionResponseBase;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,10 +12,13 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @RequiredArgsConstructor
 public class AuthFailureHandler implements AuthenticationFailureHandler {
+
+  private static final JsonMapper JSON_MAPPER = JsonMapper.builder().build();
 
   @Override
   public void onAuthenticationFailure(
@@ -35,9 +37,8 @@ public class AuthFailureHandler implements AuthenticationFailureHandler {
     }
 
     val res = new ExceptionResponseBase(errorCode);
-    val mapper = new ObjectMapper();
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     response.setHeader("Content-Type", "application/json");
-    response.getWriter().write(mapper.writeValueAsString(res));
+    response.getWriter().write(JSON_MAPPER.writeValueAsString(res));
   }
 }
