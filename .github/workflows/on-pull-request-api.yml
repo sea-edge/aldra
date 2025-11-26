@@ -30,7 +30,7 @@ jobs:
       - name: Run Spotless Check
         run: ./gradlew :api:spotlessCheck
       - name: Run Docker Containers
-        run: docker-compose up -d --build
+        run: docker compose up -d --build
       - name: Run Flyway Migrate
         run: ./gradlew :database:flywayMigrate
       - name: Run OpenAPI Generator
